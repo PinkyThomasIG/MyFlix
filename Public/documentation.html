@@ -3,22 +3,128 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>API Documentation</title>
+    <title>My Flix API</title>
+    <style>
+      table {
+        width: 100%;
+        margin: 15px;
+      }
+      table,
+      th,
+      td {
+        border: 2px;
+        padding: 15px;
+        text-align: left;
+      }
+    </style>
   </head>
   <body>
-    <h1>Movie API Documentation</h1>
-    <p>This API provides information about movies.</p>
-    <h2>Endpoints</h2>
-    <ul>
-      <li><strong>GET /</strong>: Returns a welcome message.</li>
-      <li>
-        <strong>GET /movies</strong>: Returns a JSON object of the top 10
-        movies.
-      </li>
-      <li>
-        <strong>GET /documentation.html</strong>: Displays this documentation
-        file.
-      </li>
-    </ul>
+    <h1>Documentation</h1>
+    <h2>API Endpoints</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Business Logic</th>
+          <th>URL</th>
+          <th>Description</th>
+          <th>HTTP Method</th>
+          <th>Query Parameters</th>
+          <th>Request body data format</th>
+          <th>Response body data format</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!--Create a new user-->
+        <tr>
+          <td>Create a New User</td>
+          <td>/users</td>
+          <td>Allows a new user to create profile</td>
+          <td>POST</td>
+          <td>username (URL parameter)</td>
+          <td>None</td>
+          <td>JSON object with information</td>
+        </tr>
+        <!--Update user name-->
+        <tr>
+          <td>Update a User Name</td>
+          <td>/users/:id</td>
+          <td>Allows a user to update name and other info</td>
+          <td>PUT</td>
+          <td>user id (URL parameter)</td>
+          <td>JSON object with updated user info</td>
+          <td>Confirmation message</td>
+        </tr>
+        <!--Add movie to favorites-->
+        <tr>
+          <td>Add a Favorite Movie</td>
+          <td>/users/:id/:movietitle</td>
+          <td>Allows a user to add a favorite movie</td>
+          <td>POST</td>
+          <td>user id, movietitle</td>
+          <td>JSON object with movie title</td>
+          <td>Updated list of favorite movies</td>
+        </tr>
+        <!--Delete a user's favorite movie-->
+        <tr>
+          <td>Remove a Movie From Favorites</td>
+          <td>/users/:id/:movietitle</td>
+          <td>Allows a user to remove movies from the favorite list</td>
+          <td>DELETE</td>
+          <td>user id, movietitle</td>
+          <td>None</td>
+          <td>Updated list of favorite movies or confirmation message</td>
+        </tr>
+        <!--Deregister a user-->
+        <tr>
+          <td>Delete a User</td>
+          <td>/users/:id</td>
+          <td>Allows a user to be deleted</td>
+          <td>DELETE</td>
+          <td>user id (URL parameter)</td>
+          <td>None</td>
+          <td>Confirmation or error message</td>
+        </tr>
+        <!--Get all movies-->
+        <tr>
+          <td>Get All Movies</td>
+          <td>/movies</td>
+          <td>Returns a list of all movies</td>
+          <td>GET</td>
+          <td>None</td>
+          <td>None</td>
+          <td>JSON of movie array</td>
+        </tr>
+        <!--Get movie by title--->
+        <tr>
+          <td>Get Movies by Movie Title</td>
+          <td>/movies/:title</td>
+          <td>Returns a movie by its specified title</td>
+          <td>GET</td>
+          <td>title (URL parameter)</td>
+          <td>None</td>
+          <td>JSON obejct with movie</td>
+        </tr>
+        <!--Get movie by genre-->
+        <tr>
+          <td>Get Movies by Genre</td>
+          <td>/movies/genre/:genrename</td>
+          <td>Returns a movie by its genre</td>
+          <td>GET</td>
+          <td>name (URL parameter)</td>
+          <td>None</td>
+          <td>JSON object with genre name</td>
+        </tr>
+        <!--Get movie by director name-->
+        <tr>
+          <td>Get Movies by Director's Name</td>
+          <td>/movies/director/:directorname</td>
+          <td>Returns movies by the directors name</td>
+          <td>GET</td>
+          <td>name (URL parameter)</td>
+          <td>None</td>
+          <td>JSON object about director and movie they directed</td>
+        </tr>
+      </tbody>
+    </table>
   </body>
 </html>
