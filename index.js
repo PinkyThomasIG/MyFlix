@@ -1,105 +1,43 @@
-const express = require("express");
-const morgan = require("morgan");
-const uuid = require("uuid");
+const express = require("express"); // To handle HTTP requests and responses
+const app = express();
+const bodyParser = require("body-parser"); // middleware
+app.use(bodyParser.json());
+let auth = require("./auth")(app);
+const passport = require("passport"); // For authentication
+require("./passport");
 
 const mongoose = require("mongoose");
 const Models = require("./models.js");
 
 const Movies = Models.Movie;
 const Users = Models.User;
+const Genres = Models.Genre;
+const Director = Models.Director;
 
-mongoose.connect("mongodb://127.0.0.1:27017/MyFlixDatabase", {
+// To connect MyFlixDatabase
+mongoose.connect("mongodb://localhost:27017/MyFlixDatabase", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
 
-const app = express();
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Morgan middleware
-app.use(morgan("combined"));
-
-// Static request
-app.use(express.static("public"));
-
-/* let movies = [
-  {
-    Title: "The Godfather",
-    Description:
-      "The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.",
-    Genre: {
-      Name: "Crime",
-    },
-    Director: {
-      Name: "Francis Ford Coppola",
-    },
-    ImageURL:
-      "https://www.imdb.com/title/tt0068646/mediaviewer/rm1597694977/?ref_=tt_ov_i",
-  },
-  {
-    Title: "The Matrix",
-    Description:
-      "When a beautiful stranger leads computer hacker Neo to a forbidding underworld, he discovers the shocking truth--the life he knows is the elaborate deception of an evil cyber-intelligence.",
-    Genre: {
-      Name: "Action/Sci-fi",
-    },
-    Director: {
-      Name: "Lana Wachowski",
-    },
-    ImageURL:
-      "https://www.imdb.com/title/tt0133093/mediaviewer/rm525547776/?ref_=tt_ov_i",
-  },
-  {
-    Title: "The Lord of the Rings: The Return of the King",
-    Description:
-      "Gandalf and Aragorn lead the World of Men against Sauron's army to draw his gaze from Frodo and Sam as they approach Mount Doom with the One Ring",
-    Genre: {
-      Name: "Fantasy",
-    },
-    Director: {
-      Name: "Peter Jackson",
-    },
-    ImageURL:
-      "https://www.imdb.com/title/tt0120737/mediaviewer/rm3592958976/?ref_=tt_ov_i",
-  },
-]; */
-
-/* let users = [
-  {
-    id: 1,
-    name: "Jayden Smith",
-    favoriteMovies: ["Jurassic Park"],
-  },
-  {
-    id: 2,
-    name: "Destiny Johnson",
-    favoriteMovies: ["Top Gun"],
-  },
-]; */
-
 // CREATE
-app.post("/users", async (req, res) => {
-  await Users.findOne({ Username: req.body.Username })
+// Add a new user
+app.post("/users", (req, res) => {
+  Users.findOne({ Username: req.body.Username })
     .then((user) => {
       if (user) {
-        return res.status(400).send(req.body.Username + "already exists");
+        res.status(400).send(req.body.Username + " already exists");
       } else {
-        Users.create({
+        return Users.create({
           Username: req.body.Username,
           Password: req.body.Password,
           Email: req.body.Email,
-          Birthday: new Date(req.body.Birthday),
-        })
-          .then((user) => {
-            res.status(201).json(user);
-          })
-          .catch((error) => {
-            console.error(error);
-            res.status(500).send("Error: " + error);
-          });
+          Birthday: req.body.Birthday,
+        });
       }
+    })
+    .then((newUser) => {
+      res.status(201).json(newUser);
     })
     .catch((error) => {
       console.error(error);
@@ -107,124 +45,233 @@ app.post("/users", async (req, res) => {
     });
 });
 
-// UPDATE
-app.put("/users/:Username", async (req, res) => {
-  await Users.findOneAndUpdate(
-    { Username: req.params.Username },
-    {
-      $set: {
-        Username: req.body.Username,
-        Password: req.body.Password,
-        Email: req.body.Email,
-        Birthday: new Date(req.body.Birthday),
-      },
-    },
-    { new: true }
-  )
-    .then((updatedUser) => {
-      res.json(updatedUser);
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send("Error: " + err);
-    });
-});
+// Update user info by username
+app.put(
+  "/users/:Username",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    // Check if the authenticated user is the same as the user to be updated
+    if (req.user.Username !== req.params.Username) {
+      return res.status(400).send("Permission denied");
+    }
 
-app.post("/users/:Username/movies/:MovieID", async (req, res) => {
-  await Users.findOneAndUpdate(
-    { Username: req.params.Username },
-    {
-      $push: { FavoriteMovies: req.params.MovieID },
-    },
-    { new: true }
-  )
-    .then((updatedUser) => {
-      res.json(updatedUser);
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send("Error: " + err);
-    });
-});
+    Users.findOneAndUpdate(
+      { Username: req.params.Username },
+      {
+        $set: {
+          Username: req.body.Username,
+          Password: req.body.Password,
+          Email: req.body.Email,
+          Birthday: req.body.Birthday,
+        },
+      },
+      { new: true }
+    )
+      .then((updatedUser) => {
+        if (updatedUser) {
+          res.json(updatedUser);
+        } else {
+          res.status(404).send("No such user");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
+
+// ADD a movie to a user's list of favorites
+app.post(
+  "/users/:Username/movies/:MovieID",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    // Check if the authenticated user is the same as the user adding the favorite movie
+    if (req.user.Username !== req.params.Username) {
+      return res.status(400).send("Permission denied");
+    }
+
+    Users.findOneAndUpdate(
+      { Username: req.params.Username },
+      {
+        $push: {
+          FavoriteMovies: new mongoose.Types.ObjectId(req.params.MovieID),
+        },
+      },
+      { new: true }
+    )
+      .then((updatedUser) => {
+        if (updatedUser) {
+          res.json(updatedUser);
+        } else {
+          res.status(404).send("User not found");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
+
+// DELETE (Remove a movie from a user's favorite list)
+app.delete(
+  "/users/:Username/movies/:MovieID",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    // Check if the authenticated user is the same as the user deleting the favorite movie
+    if (req.user.Username !== req.params.Username) {
+      return res.status(400).send("Permission denied");
+    }
+
+    Users.findOneAndUpdate(
+      { Username: req.params.Username },
+      {
+        $pull: {
+          FavoriteMovies: new mongoose.Types.ObjectId(req.params.MovieID),
+        },
+      },
+      { new: true }
+    )
+      .then((updatedUser) => {
+        if (updatedUser) {
+          res.json(updatedUser);
+        } else {
+          res.status(404).send("User not found");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
+
+// DELETE a user by username
+app.delete(
+  "/users/:Username",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    // Check if the authenticated user is the same as the user being deleted
+    if (req.user.Username !== req.params.Username) {
+      return res.status(400).send("Permission denied");
+    }
+
+    Users.findOneAndDelete({ Username: req.params.Username })
+      .then((user) => {
+        if (!user) {
+          res.status(404).send(req.params.Username + " was not found");
+        } else {
+          res.status(200).send(req.params.Username + " was deleted.");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
 
 // READ
-app.get("/movies", async (req, res) => {
-  await Movies.find()
-    .then((movies) => {
-      res.status(201).json(movies);
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send("Error: " + err);
-    });
-});
+// Get all movies
+app.get(
+  "/movies",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    Movies.find()
+      .then((movies) => {
+        res.status(201).json(movies);
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send("Error: " + error);
+      });
+  }
+);
 
-app.get("/movies/:title", async (req, res) => {
-  await Movies.findOne({ Title: req.params.title })
-    .then((movie) => {
-      res.json(movie);
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send("Error: " + err);
-    });
-});
+// Get a user by username
+app.get(
+  "/users/:Username",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    // Check if the authenticated user is the same as the requested user
+    if (req.user.Username !== req.params.Username) {
+      return res.status(400).send("Permission denied");
+    }
 
-app.get("/movies/genre/:genre", async (req, res) => {
-  await Movies.find({ "Genre.Name": req.params.genre })
-    .then((movies) => {
-      res.json(movies);
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send("Error: " + err);
-    });
-});
+    Users.findOne({ Username: req.params.Username })
+      .then((user) => {
+        if (user) {
+          res.json(user);
+        } else {
+          res.status(404).send("User not found");
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send("Error: " + error);
+      });
+  }
+);
 
-app.get("/movies/directors/:directorName", async (req, res) => {
-  await Movies.find({ "Director.Name": req.params.directorName })
-    .then((movies) => {
-      res.json(movies);
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send("Error: " + err);
-    });
-});
+// Get a single movie by title
+app.get(
+  "/movies/:title",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    Movies.findOne({ Title: req.params.title })
+      .then((movie) => {
+        if (movie) {
+          res.status(200).json(movie);
+        } else {
+          res.status(404).send("No such movie");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
 
-// DELETE
-app.delete("/users/:Username/movies/:MovieID", async (req, res) => {
-  await Users.findOneAndUpdate(
-    { Username: req.params.Username },
-    {
-      $pull: { FavoriteMovies: req.params.MovieID },
-    },
-    { new: true }
-  )
-    .then((updatedUser) => {
-      res.json(updatedUser);
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send("Error: " + err);
-    });
-});
+// Get genre data by name
+app.get(
+  "/movies/genre/:genreName",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    Genres.findOne({ Name: req.params.genreName })
+      .then((genre) => {
+        if (genre) {
+          res.status(200).json(genre);
+        } else {
+          res.status(404).send("No such genre");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
 
-app.delete("/users/:Username", async (req, res) => {
-  await Users.findOneAndDelete({ Username: req.params.Username })
-    .then((user) => {
-      if (!user) {
-        res.status(400).send(req.params.Username + " was not found");
-      } else {
-        res.status(200).send(req.params.Username + " was deleted.");
-      }
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send("Error: " + err);
-    });
-});
-//listen for request
-app.listen(8080, () => {
-  console.log("Your app is listening on port 8080.");
-});
+// Get director data by name
+app.get(
+  "/movies/directors/:directorName",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    Director.findOne({ Name: req.params.directorName })
+      .then((director) => {
+        if (director) {
+          res.status(200).json(director);
+        } else {
+          res.status(404).send("No such director");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
+
+app.listen(8080, () => console.log("Listening on port 8080"));
