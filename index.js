@@ -12,7 +12,7 @@ const Models = require("./models.js");
 const Movies = Models.Movie;
 const Users = Models.User;
 const Genres = Models.Genre;
-const Director = Models.Director;
+// const Director = Models.Director;
 
 // To connect MyFlixDatabase
 mongoose.connect("mongodb://localhost:27017/MyFlixDatabase", {
@@ -219,7 +219,10 @@ app.get(
   "/movies/:title",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
-    Movies.findOne({ Title: req.params.title })
+    // Movies.findOne({ Title: req.params.title })
+    Movies.findOne({
+      Title: { $regex: new RegExp("^" + req.params.title + "$", "i") },
+    })
       .then((movie) => {
         if (movie) {
           res.status(200).json(movie);
@@ -235,11 +238,12 @@ app.get(
 );
 
 // Get genre data by name
-app.get(
+
+/* app.get(
   "/movies/genre/:genreName",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
-    Genres.findOne({ Name: req.params.genreName })
+       Genres.findOne({ Name: req.params.genreName })
       .then((genre) => {
         if (genre) {
           res.status(200).json(genre);
@@ -252,10 +256,33 @@ app.get(
         res.status(500).send("Error: " + err);
       });
   }
+); */
+
+app.get(
+  "/movies/genre/:genreName",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    // Use the correct genre name field in the query: "Genre.name"
+    Movies.find({
+      "Genre.name": { $regex: new RegExp(req.params.genreName, "i") },
+    })
+      .then((movies) => {
+        if (movies.length > 0) {
+          res.status(200).json(movies);
+        } else {
+          res.status(404).send("No movies found for this genre");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
 );
 
 // Get director data by name
-app.get(
+
+/* app.get(
   "/movies/directors/:directorName",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
@@ -270,6 +297,45 @@ app.get(
       .catch((err) => {
         console.error(err);
         res.status(500).send("Error: " + err);
+      });
+  }
+); */
+
+app.get(
+  "/movies/directors/:directorName",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    // Use the correct field names, matching the case in the database
+    Movies.find({
+      "Director.name": { $regex: new RegExp(req.params.directorName, "i") },
+    })
+      .then((movies) => {
+        if (movies.length > 0) {
+          res.status(200).json(movies); // Return the movies where the director name matches
+        } else {
+          res.status(404).send("No movies found for this director");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
+
+// get all users
+
+app.get(
+  "/users",
+  passport.authenticate("jwt", { session: false }), // Ensure the user is authenticated
+  (req, res) => {
+    Users.find()
+      .then((users) => {
+        res.status(200).json(users); // Return all users in the database
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send("Error: " + error);
       });
   }
 );
