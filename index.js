@@ -272,22 +272,6 @@ app.get(
 );
 
 // Get director data by name
-/*passport.authenticate("jwt", { session: false }),
-  (req, res) => {
-    Director.findOne({ Name: req.params.directorName })
-      .then((director) => {
-        if (director) {
-          res.status(200).json(director);
-        } else {
-          res.status(404).send("No such director");
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(500).send("Error: " + err);
-      });
-  }
-);  */
 
 app.get(
   "/movies/directors/:directorName",
