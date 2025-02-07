@@ -1,6 +1,8 @@
+const dotenv = require("dotenv");
 const { check, validationResult } = require("express-validator");
 const express = require("express"); // To handle HTTP requests and responses
 const app = express();
+dotenv.config();
 const bodyParser = require("body-parser"); // middleware
 app.use(bodyParser.json());
 const cors = require("cors");
