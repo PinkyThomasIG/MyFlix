@@ -28,7 +28,7 @@ mongoose.connect("mongodb://localhost:27017/MyFlixDatabase", {
 
 // Connect to MongoDB
 mongoose
-  .connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(dbURI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log("MongoDB connection error:", err));
 
@@ -324,6 +324,13 @@ app.get(
 // app.listen(8080, () => console.log("Listening on port 8080"));
 
 const port = process.env.PORT || 8080;
+
+app.get("/", (req, res) => {
+  res.send(
+    "Welcome to MyFlix API! Use Postman or a frontend to interact with the API."
+  );
+});
+
 app.listen(port, "0.0.0.0", () => {
   console.log("Listening on Port " + port);
 });
