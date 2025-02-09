@@ -13,6 +13,8 @@ require("./passport");
 
 const mongoose = require("mongoose");
 const dbURI = process.env.MONGO_URI;
+// const dbURI =
+// "mongodb+srv://PinkyThomas:AbinAlex123@clustermyflix.1vcsu.mongodb.net/test?retryWrites=true&w=majority&appName=Clustermyflix";
 const Models = require("./models.js");
 
 const Movies = Models.Movie;
