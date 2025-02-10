@@ -1,5 +1,7 @@
 const dotenv = require("dotenv");
-const { check, validationResult } = require("express-validator");
+const { body, validationResult } = require("express-validator");
+
+//const { check, validationResult } = require("express-validator");
 const express = require("express"); // To handle HTTP requests and responses
 const app = express();
 dotenv.config();
@@ -29,7 +31,50 @@ mongoose
 // CREATE
 // Add a new user
 
-app.post("/users", async (req, res) => {
+app.post(
+  "/users",
+  [
+    body("Username").not().isEmpty().withMessage("Username is required"),
+    body("Password").not().isEmpty().withMessage("Password is required"),
+    body("Email").isEmail().withMessage("Invalid email format"),
+  ],
+  async (req, res) => {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    let hashedPassword = Users.hashPassword(req.body.Password);
+
+    await Users.findOne({ Username: req.body.Username })
+      .then((user) => {
+        if (user) {
+          return res.status(400).send(req.body.Username + " already exists");
+        } else {
+          Users.create({
+            Username: req.body.Username,
+            Password: hashedPassword,
+            Email: req.body.Email,
+            Birthday: req.body.Birthday,
+          })
+            .then((user) => {
+              res.status(201).json(user);
+            })
+            .catch((error) => {
+              console.error(error);
+              res.status(500).send("Error: " + error);
+            });
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send("Error: " + error);
+      });
+  }
+);
+
+/* app.post("/users", async (req, res) => {
   let hashedPassword = Users.hashPassword(req.body.Password);
   await Users.findOne({ Username: req.body.Username }) // Search to see if a user with the requested username already exists
     .then((user) => {
@@ -56,7 +101,7 @@ app.post("/users", async (req, res) => {
       console.error(error);
       res.status(500).send("Error: " + error);
     });
-});
+}); */
 
 // Update user info by username
 app.put(
