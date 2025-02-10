@@ -13,20 +13,12 @@ require("./passport");
 
 const mongoose = require("mongoose");
 const dbURI = process.env.MONGO_URI;
-// const dbURI =
-// "mongodb+srv://PinkyThomas:AbinAlex123@clustermyflix.1vcsu.mongodb.net/test?retryWrites=true&w=majority&appName=Clustermyflix";
+
 const Models = require("./models.js");
 
 const Movies = Models.Movie;
 const Users = Models.User;
 const Genres = Models.Genre;
-// const Director = Models.Director;
-
-/* To connect MyFlixDatabase
-mongoose.connect("mongodb://localhost:27017/MyFlixDatabase", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}); */
 
 // Connect to MongoDB
 mongoose
@@ -280,7 +272,7 @@ app.get(
         res.status(500).send("Error: " + err);
       });
   }
-); // test comment
+);
 
 // Get director data by name
 
@@ -322,8 +314,6 @@ app.get(
       });
   }
 );
-
-// app.listen(8080, () => console.log("Listening on port 8080"));
 
 const port = process.env.PORT || 8080;
 
