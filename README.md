@@ -36,8 +36,8 @@ To run this API locally, follow these steps:
 
 ### 1. Clone the repository
 
-git clone https://github.com/your-username/myFlix-API.git
-cd myFlix-API
+git clone https://github.com/your-username/MyFlix.git
+cd MyFlix
 
 ### Install Dependencies
 
