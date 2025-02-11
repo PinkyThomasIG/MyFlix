@@ -34,7 +34,10 @@ mongoose
 app.post(
   "/users",
   [
-    check("Username", "Username is required").isLength({ min: 5 }),
+    check("Username", "Username is required").not().isEmpty(),
+    check("Username", "Username must be at least 5 characters long").isLength({
+      min: 5,
+    }),
     check(
       "Username",
       "Username contains non alphanumeric characters - not allowed"
