@@ -34,13 +34,13 @@ mongoose
 app.post(
   "/users",
   [
-    check("username", "Username is required").isLength({ min: 5 }),
+    check("Username", "Username is required").isLength({ min: 5 }),
     check(
-      "username",
+      "Username",
       "Username contains non alphanumeric characters - not allowed"
     ).isAlphanumeric(),
-    check("password", "password is required").not().isEmpty(),
-    check("email", "Email does not appear to be valid").isEmail(),
+    check("Password", "password is required").not().isEmpty(),
+    check("Email", "Email does not appear to be valid").isEmail(),
   ],
   async (req, res) => {
     let errors = validationResult(req);
