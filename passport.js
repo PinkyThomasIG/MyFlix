@@ -69,14 +69,13 @@ passport.use(
   )
 );
 
-passport.use(
+/* passport.use(
   new JWTStrategy(
     {
       jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
-      secretOrKey: process.env.MONGO_URI,
+      secretOrKey: "your_jwt_secret",
     },
     async (jwtPayload, callback) => {
-      console.log("JWT Payload:", jwtPayload); // Log the payload to debug
       return await Users.findById(jwtPayload._id)
         .then((user) => {
           return callback(null, user);
@@ -84,6 +83,26 @@ passport.use(
         .catch((error) => {
           return callback(error);
         });
+    }
+  )
+); */
+
+passport.use(
+  new JWTStrategy(
+    {
+      jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
+      secretOrKey: "your_jwt_secret", // Ensure this secret is the same as the one used to sign the JWT.
+    },
+    async (jwtPayload, callback) => {
+      try {
+        const user = await Users.findById(jwtPayload._id);
+        if (!user) {
+          return callback(null, false, { message: "User not found" });
+        }
+        return callback(null, user);
+      } catch (error) {
+        return callback(error);
+      }
     }
   )
 );

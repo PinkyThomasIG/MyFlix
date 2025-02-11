@@ -224,12 +224,30 @@ app.delete(
   }
 ); */
 
-app.get(
+/* app.get(
   "/movies",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     try {
       const movies = await Movies.find(); // Fetch all movies from MongoDB
+      if (!movies.length) {
+        return res.status(404).send("No movies found");
+      }
+      res.status(200).json(movies);
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Error fetching movies");
+    }
+  }
+);*/
+
+app.get(
+  "/movies",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    console.log("Authenticated User:", req.user);
+    try {
+      const movies = await Movies.find();
       if (!movies.length) {
         return res.status(404).send("No movies found");
       }
