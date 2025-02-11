@@ -73,9 +73,10 @@ passport.use(
   new JWTStrategy(
     {
       jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
-      secretOrKey: "your_jwt_secret",
+      secretOrKey: process.env.MONGO_URI,
     },
     async (jwtPayload, callback) => {
+      console.log("JWT Payload:", jwtPayload); // Log the payload to debug
       return await Users.findById(jwtPayload._id)
         .then((user) => {
           return callback(null, user);
