@@ -339,7 +339,7 @@ app.get(
   (req, res) => {
     // Use the correct field names, matching the case in the database
     Movies.find({
-      "Director.name": { $regex: new RegExp(req.params.directorName, "i") },
+      "director.name": { $regex: new RegExp(req.params.directorName, "i") },
     })
       .then((movies) => {
         if (movies.length > 0) {
