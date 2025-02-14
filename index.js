@@ -117,7 +117,7 @@ app.put(
 );
 
 // ADD a movie to a user's list of favorites
-app.post(
+/* app.post(
   "/users/:Username/movies/:MovieID",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
@@ -125,7 +125,6 @@ app.post(
     if (req.user.Username !== req.params.Username) {
       return res.status(400).send("Permission denied");
     }
-
     Users.findOneAndUpdate(
       { Username: req.params.Username },
       {
@@ -146,6 +145,52 @@ app.post(
         console.error(err);
         res.status(500).send("Error: " + err);
       });
+  }
+); */
+
+app.post(
+  "/users/:Username/movies/:MovieID",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    try {
+      // Check if the authenticated user is the same as the user adding the favorite movie
+      if (req.user.Username !== req.params.Username) {
+        return res.status(403).send("Permission denied");
+      }
+
+      // Validate the MovieID format (should be a valid ObjectId format)
+      if (!req.params.MovieID.match(/^[0-9a-fA-F]{24}$/)) {
+        return res.status(400).send("Invalid MovieID format");
+      }
+
+      // Check if the movie exists in the Movies collection
+      const movie = await Movies.findById(req.params.MovieID);
+      if (!movie) {
+        return res.status(404).send("Movie not found");
+      }
+
+      // Check if the movie is already in the user's favorite list
+      const user = await Users.findOne({ Username: req.params.Username });
+      if (user.FavoriteMovies.includes(req.params.MovieID)) {
+        return res.status(400).send("Movie is already in your favorites");
+      }
+
+      // Update the user's favorite list by adding the movie ID
+      const updatedUser = await Users.findOneAndUpdate(
+        { Username: req.params.Username },
+        { $addToSet: { FavoriteMovies: req.params.MovieID } }, // Prevent duplicates
+        { new: true }
+      ).lean();
+
+      if (!updatedUser) {
+        return res.status(404).send("User not found");
+      }
+
+      res.json(updatedUser);
+    } catch (err) {
+      console.error("Error adding favorite movie:", err);
+      res.status(500).send("Internal Server Error: " + err.message);
+    }
   }
 );
 
