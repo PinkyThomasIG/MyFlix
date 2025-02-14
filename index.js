@@ -315,7 +315,7 @@ app.get(
   (req, res) => {
     // Use the correct genre name field in the query: "Genre.name"
     Movies.find({
-      "Genre.name": { $regex: new RegExp(req.params.genreName, "i") }, // Case-insensitive search
+      "genre.name": { $regex: new RegExp(req.params.genreName, "i") }, // Case-insensitive search
     })
       .then((movies) => {
         if (movies.length > 0) {
