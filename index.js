@@ -125,10 +125,12 @@ app.post(
     if (req.user.Username !== req.params.Username) {
       return res.status(400).send("Permission denied");
     }
+    // Add the movie to the favorites list only if it is not already there
     Users.findOneAndUpdate(
       { Username: req.params.Username },
       {
-        $push: {
+        $addToSet: {
+          // Use $addToSet to avoid duplicates
           FavoriteMovies: new mongoose.Types.ObjectId(req.params.MovieID),
         },
       },
