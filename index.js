@@ -117,7 +117,7 @@ app.put(
 );
 
 // ADD a movie to a user's list of favorites
-/* app.post(
+app.post(
   "/users/:Username/movies/:MovieID",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
@@ -146,9 +146,9 @@ app.put(
         res.status(500).send("Error: " + err);
       });
   }
-); */
+);
 
-app.post(
+/* app.post(
   "/users/:Username/movies/:MovieID",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
@@ -192,38 +192,52 @@ app.post(
       res.status(500).send("Internal Server Error: " + err.message);
     }
   }
-);
+); */
 
 // DELETE (Remove a movie from a user's favorite list)
 app.delete(
   "/users/:Username/movies/:MovieID",
   passport.authenticate("jwt", { session: false }),
-  (req, res) => {
-    // Check if the authenticated user is the same as the user deleting the favorite movie
-    if (req.user.Username !== req.params.Username) {
-      return res.status(400).send("Permission denied");
-    }
+  async (req, res) => {
+    try {
+      // Check if the authenticated user is the same as the user deleting the favorite movie
+      if (req.user.Username !== req.params.Username) {
+        return res.status(403).send("Permission denied");
+      }
 
-    Users.findOneAndUpdate(
-      { Username: req.params.Username },
-      {
-        $pull: {
-          FavoriteMovies: new mongoose.Types.ObjectId(req.params.MovieID),
-        },
-      },
-      { new: true }
-    )
-      .then((updatedUser) => {
-        if (updatedUser) {
-          res.json(updatedUser);
-        } else {
-          res.status(404).send("User not found");
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(500).send("Error: " + err);
-      });
+      // Validate the MovieID format (should be a valid ObjectId format)
+      if (!req.params.MovieID.match(/^[0-9a-fA-F]{24}$/)) {
+        return res.status(400).send("Invalid MovieID format");
+      }
+
+      // Check if the movie exists in the Movies collection
+      const movie = await Movies.findById(req.params.MovieID);
+      if (!movie) {
+        return res.status(404).send("Movie not found");
+      }
+
+      // Check if the movie is in the user's favorite list
+      const user = await Users.findOne({ Username: req.params.Username });
+      if (!user.FavoriteMovies.includes(req.params.MovieID)) {
+        return res.status(400).send("Movie is not in your favorites");
+      }
+
+      // Remove the movie from the user's favorite list
+      const updatedUser = await Users.findOneAndUpdate(
+        { Username: req.params.Username },
+        { $pull: { FavoriteMovies: req.params.MovieID } },
+        { new: true }
+      );
+
+      if (!updatedUser) {
+        return res.status(404).send("User not found");
+      }
+
+      res.json(updatedUser);
+    } catch (err) {
+      console.error("Error removing favorite movie:", err);
+      res.status(500).send("Internal Server Error: " + err.message);
+    }
   }
 );
 
@@ -253,38 +267,8 @@ app.delete(
 );
 
 // READ
-// Get all movies
-/* app.get(
-  "/movies",
-  passport.authenticate("jwt", { session: false }),
-  (req, res) => {
-    Movies.find()
-      .then((movies) => {
-        res.status(201).json(movies);
-      })
-      .catch((error) => {
-        console.error(error);
-        res.status(500).send("Error: " + error);
-      });
-  }
-); */
 
-/* app.get(
-  "/movies",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    try {
-      const movies = await Movies.find(); // Fetch all movies from MongoDB
-      if (!movies.length) {
-        return res.status(404).send("No movies found");
-      }
-      res.status(200).json(movies);
-    } catch (err) {
-      console.error(err);
-      res.status(500).send("Error fetching movies");
-    }
-  }
-);*/
+// Get all movies
 
 app.get(
   "/movies",
