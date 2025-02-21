@@ -229,7 +229,7 @@ app.get(
   "/movies",
   // passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    console.log("Authenticated User:", req.user);
+    // console.log("Authenticated User:", req.user);
     try {
       const movies = await Movies.find();
       if (!movies.length) {
