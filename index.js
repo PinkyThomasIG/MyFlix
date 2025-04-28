@@ -28,8 +28,42 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log("MongoDB connection error:", err));
 
-// CREATE
-// Add a new user
+/**
+ * Create a new user.
+ *
+ * This endpoint allows a new user to register by providing a username, password, email, and birthday.
+ * The password will be hashed before storing in the database.
+ *
+ * @function createUser
+ * @param {Object} req.body - The body of the request.
+ * @param {string} req.body.Username - The username of the new user.
+ * @param {string} req.body.Password - The password for the new user.
+ * @param {string} req.body.Email - The email address of the new user.
+ * @param {string} req.body.Birthday - The birthdate of the new user.
+ *
+ * @returns {Object} A newly created user object.
+ * @throws {400} If the user already exists.
+ * @throws {422} If validation errors are found.
+ * @throws {500} If there is a server error.
+ *
+ * @example
+ * // Example request:
+ * POST /users
+ * {
+ *   "Username": "john_doe",
+ *   "Password": "password123",
+ *   "Email": "john@example.com",
+ *   "Birthday": "1990-01-01"
+ * }
+ *
+ * // Example response:
+ * {
+ *   "Username": "john_doe",
+ *   "Email": "john@example.com",
+ *   "Birthday": "1990-01-01",
+ *   "id": "5f5f5f5f5f5f5f5f5f5f5f5"
+ * }
+ */
 
 app.post(
   "/users",
@@ -79,7 +113,44 @@ app.post(
   }
 );
 
-// Update user info by username
+/**
+ * Update user information.
+ *
+ * This endpoint allows an authenticated user to update their username, password, email, and birthday.
+ * Only the user who owns the account can update their information.
+ *
+ * @function updateUser
+ * @param {string} req.params.Username - The username of the user to be updated.
+ * @param {Object} req.body - The new user data.
+ * @param {string} req.body.Username - The new username.
+ * @param {string} req.body.Password - The new password.
+ * @param {string} req.body.Email - The new email address.
+ * @param {string} req.body.Birthday - The new birthday.
+ *
+ * @returns {Object} The updated user object.
+ * @throws {400} If the user is not authorized to update this account.
+ * @throws {404} If the user is not found.
+ * @throws {500} If there is a server error.
+ *
+ * @example
+ * // Example request:
+ * PUT /users/john_doe
+ * {
+ *   "Username": "john_doe_updated",
+ *   "Password": "newpassword123",
+ *   "Email": "newemail@example.com",
+ *   "Birthday": "1990-01-01"
+ * }
+ *
+ * // Example response:
+ * {
+ *   "Username": "john_doe_updated",
+ *   "Email": "newemail@example.com",
+ *   "Birthday": "1990-01-01",
+ *   "id": "5f5f5f5f5f5f5f5f5f5f5f5"
+ * }
+ */
+
 app.put(
   "/users/:Username",
   passport.authenticate("jwt", { session: false }),
@@ -115,7 +186,34 @@ app.put(
   }
 );
 
-// ADD a movie to a user's list of favorites
+/**
+ * Add a movie to the user's favorite list.
+ *
+ * This endpoint allows an authenticated user to add a movie to their favorites list.
+ * The movie will be added only if it is not already in the user's favorites.
+ *
+ * @function addMovieToFavorites
+ * @param {string} req.params.Username - The username of the user adding the movie.
+ * @param {string} req.params.MovieID - The movie ID to be added to the user's favorites list.
+ *
+ * @returns {Object} The updated user object with the favorite movie added.
+ * @throws {400} If the user is not authorized to add a movie to this account.
+ * @throws {404} If the user is not found.
+ * @throws {500} If there is a server error.
+ *
+ * @example
+ * // Example request:
+ * POST /users/john_doe/movies/1234567890abcdef
+ *
+ * // Example response:
+ * {
+ *   "Username": "john_doe",
+ *   "FavoriteMovies": [
+ *     "1234567890abcdef"
+ *   ]
+ * }
+ */
+
 app.post(
   "/users/:Username/movies/:MovieID",
   passport.authenticate("jwt", { session: false }),
@@ -149,7 +247,32 @@ app.post(
   }
 );
 
-// DELETE (Remove a movie from a user's favorite list)
+/**
+ * Remove a movie from the user's favorite list.
+ *
+ * This endpoint allows an authenticated user to remove a movie from their favorites list.
+ * If the movie is not in the user's favorites, an error will be returned.
+ *
+ * @function removeMovieFromFavorites
+ * @param {string} req.params.Username - The username of the user removing the movie.
+ * @param {string} req.params.MovieID - The movie ID to be removed from the user's favorites list.
+ *
+ * @returns {Object} The updated user object with the movie removed.
+ * @throws {400} If the user is not authorized to remove a movie from this account.
+ * @throws {404} If the user or movie is not found.
+ * @throws {500} If there is a server error.
+ *
+ * @example
+ * // Example request:
+ * DELETE /users/john_doe/movies/1234567890abcdef
+ *
+ * // Example response:
+ * {
+ *   "Username": "john_doe",
+ *   "FavoriteMovies": []
+ * }
+ */
+
 app.delete(
   "/users/:Username/movies/:MovieID",
   passport.authenticate("jwt", { session: false }),
@@ -221,9 +344,39 @@ app.delete(
   }
 );
 
-// READ
-
-// Get all movies
+/**
+ * Get all movies in the database.
+ *
+ * This endpoint returns a list of all movies available in the database.
+ *
+ * @function getAllMovies
+ *
+ * @returns {Array} An array of movie objects.
+ * @throws {404} If no movies are found.
+ * @throws {500} If there is a server error.
+ *
+ * @example
+ * // Example request:
+ * GET /movies
+ *
+ * // Example response:
+ * [
+ *   {
+ *     "id": "1",
+ *     "Title": "Inception",
+ *     "Genre": "Sci-Fi",
+ *     "Director": "Christopher Nolan",
+ *     "Year": 2010
+ *   },
+ *   {
+ *     "id": "2",
+ *     "Title": "The Dark Knight",
+ *     "Genre": "Action",
+ *     "Director": "Christopher Nolan",
+ *     "Year": 2008
+ *   }
+ * ]
+ */
 
 app.get(
   "/movies",
@@ -243,7 +396,33 @@ app.get(
   }
 );
 
-// Get a user by username
+/**
+ * Get a user by their username.
+ *
+ * This endpoint retrieves a user by their username. The username is passed as a parameter in the URL.
+ * The user must be authenticated with a JWT token, and the token must match the username requested.
+ *
+ * @function getUserByUsername
+ * @param {string} Username - The username of the user to be retrieved.
+ * @middleware passport.authenticate("jwt", { session: false }) - Ensures the user is authenticated using JWT.
+ * @throws {400} If the authenticated user does not match the requested username.
+ * @returns {Object} A user object with the details of the requested user.
+ * @throws {404} If no user is found with the specified username.
+ * @throws {500} If there is a server error while retrieving the user.
+ *
+ * @example
+ * // Example request:
+ * GET /users/johndoe
+ *
+ * // Example response:
+ * {
+ *   "Username": "johndoe",
+ *   "Email": "johndoe@example.com",
+ *   "Birthday": "1990-05-12",
+ *   "id": "5f5f5f5f5f5f5f5f5f5f5f5"
+ * }
+ */
+
 app.get(
   "/users/:Username",
   passport.authenticate("jwt", { session: false }),
@@ -268,7 +447,34 @@ app.get(
   }
 );
 
-// Get a single movie by title
+/**
+ * Get a movie by its title.
+ *
+ * This endpoint retrieves a single movie by its exact title. The title is passed as a parameter in the URL.
+ * The user must be authenticated with a JWT token to access this endpoint.
+ *
+ * @function getMovieByTitle
+ * @param {string} title - The title of the movie to be retrieved.
+ * @middleware passport.authenticate("jwt", { session: false }) - Ensures the user is authenticated using JWT.
+ *
+ * @returns {Object} A movie object with details about the specified movie.
+ * @throws {404} If no movie is found with the specified title.
+ * @throws {500} If there is a server error while retrieving the movie.
+ *
+ * @example
+ * // Example request:
+ * GET /movies/Inception
+ *
+ * // Example response:
+ * {
+ *   "Title": "Inception",
+ *   "Director": "Christopher Nolan",
+ *   "Genre": "Action, Adventure, Sci-Fi",
+ *   "Year": "2010",
+ *   "id": "5f5f5f5f5f5f5f5f5f5f5f5"
+ * }
+ */
+
 app.get(
   "/movies/:title",
   passport.authenticate("jwt", { session: false }),
@@ -291,7 +497,42 @@ app.get(
   }
 );
 
-// Get genre data by name
+/**
+ * Get movies of a specific genre.
+ *
+ * This endpoint retrieves all movies that belong to a specified genre. The genre's name is passed as a parameter in the URL.
+ * The user must be authenticated with a JWT token to access this endpoint.
+ *
+ * @function getMoviesByGenre
+ * @param {string} genreName - The name of the genre whose movies are being requested.
+ * @middleware passport.authenticate("jwt", { session: false }) - Ensures the user is authenticated using JWT.
+ *
+ * @returns {Array} An array of movie objects belonging to the specified genre.
+ * @throws {404} If no movies are found for the specified genre.
+ * @throws {500} If there is a server error while retrieving the movies.
+ *
+ * @example
+ * // Example request:
+ * GET /movies/genre/Action
+ *
+ * // Example response:
+ * [
+ *   {
+ *     "Title": "Mad Max: Fury Road",
+ *     "Director": "George Miller",
+ *     "Genre": "Action, Adventure",
+ *     "Year": "2015",
+ *     "id": "5f5f5f5f5f5f5f5f5f5f5f5"
+ *   },
+ *   {
+ *     "Title": "Die Hard",
+ *     "Director": "John McTiernan",
+ *     "Genre": "Action, Thriller",
+ *     "Year": "1988",
+ *     "id": "5f5f5f5f5f5f5f5f5f5f5f6"
+ *   }
+ * ]
+ */
 
 app.get(
   "/movies/genre/:genreName",
@@ -315,7 +556,42 @@ app.get(
   }
 );
 
-// Get director data by name
+/**
+ * Get movies directed by a specific director.
+ *
+ * This endpoint retrieves all movies directed by a specific director. The director's name is passed as a parameter in the URL.
+ * The user must be authenticated with a JWT token to access this endpoint.
+ *
+ * @function getMoviesByDirector
+ * @param {string} directorName - The name of the director whose movies are being requested.
+ * @middleware passport.authenticate("jwt", { session: false }) - Ensures the user is authenticated using JWT.
+ *
+ * @returns {Array} An array of movie objects directed by the specified director.
+ * @throws {404} If no movies are found for the specified director.
+ * @throws {500} If there is a server error while retrieving the movies.
+ *
+ * @example
+ * // Example request:
+ * GET /movies/directors/Steven%20Spielberg
+ *
+ * // Example response:
+ * [
+ *   {
+ *     "Title": "Jurassic Park",
+ *     "Director": "Steven Spielberg",
+ *     "Genre": "Adventure, Sci-Fi",
+ *     "Year": "1993",
+ *     "id": "5f5f5f5f5f5f5f5f5f5f5f5"
+ *   },
+ *   {
+ *     "Title": "E.T. the Extra-Terrestrial",
+ *     "Director": "Steven Spielberg",
+ *     "Genre": "Family, Sci-Fi",
+ *     "Year": "1982",
+ *     "id": "5f5f5f5f5f5f5f5f5f5f5f6"
+ *   }
+ * ]
+ */
 
 app.get(
   "/movies/directors/:directorName",
@@ -339,7 +615,38 @@ app.get(
   }
 );
 
-// get all users
+/**
+ * Get all users.
+ *
+ * This endpoint retrieves a list of all users from the database.
+ * The user must be authenticated with a JWT token to access this endpoint.
+ *
+ * @function getAllUsers
+ * @middleware passport.authenticate("jwt", { session: false }) - Ensures the user is authenticated using JWT.
+ *
+ * @returns {Array} An array of user objects. Each object contains the user's details.
+ * @throws {500} If there is a server error while retrieving users.
+ *
+ * @example
+ * // Example request:
+ * GET /users
+ *
+ * // Example response:
+ * [
+ *   {
+ *     "Username": "john_doe",
+ *     "Email": "john_doe@example.com",
+ *     "Birthday": "1990-01-01",
+ *     "id": "5f5f5f5f5f5f5f5f5f5f5f5"
+ *   },
+ *   {
+ *     "Username": "jane_doe",
+ *     "Email": "jane_doe@example.com",
+ *     "Birthday": "1992-02-02",
+ *     "id": "5f5f5f5f5f5f5f5f5f5f5f6"
+ *   }
+ * ]
+ */
 
 app.get(
   "/users",
